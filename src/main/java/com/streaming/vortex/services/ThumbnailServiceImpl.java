@@ -3,6 +3,8 @@ package com.streaming.vortex.services;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 
@@ -99,12 +101,11 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		if (count >= 5) {
 			return;
 		}
-		File folder = new File(this.thumbRoot + "\\previews\\" + video.getId());
+		File folder = new File(this.thumbRoot, "previews" + File.separator + video.getId());
 		folder.mkdirs();
 		double duration = getVideoDuration(video.getFilePath());
-		double start = 15; // segundos iniciales que se ignoran
-		double end = duration - 10; // últimos 10 segundos que se ignoran
-		// Si el video es muy corto, usamos todo el video
+		double start = 15;
+		double end = duration - 10;
 		if (end <= start) {
 			start = 0;
 			end = duration;
@@ -172,7 +173,8 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 
 	@Override
 	public Resource getContinuePreview(Long id) {
-		File file = new File(thumbRoot + "\\continue\\" + id + ".jpg");
+		Path path = Paths.get(thumbRoot, "continue", id + ".jpg");
+		File file = path.toFile();
 		if (!file.exists()) {
 			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imagen de continuar viendo no encontrada");
 		}
