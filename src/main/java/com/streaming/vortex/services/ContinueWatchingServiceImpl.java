@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.streaming.vortex.common.Constantes;
 import com.streaming.vortex.entities.ContinueWatching;
 import com.streaming.vortex.entities.Video;
 import com.streaming.vortex.mapper.ContinueWatchingMapper;
@@ -40,7 +41,7 @@ public class ContinueWatchingServiceImpl implements ContinueWatchingService {
 	public void saveProgress(ContinueWatchingRequest request) {
 
 		Video video = videoRepository.findById(request.getVideoId())
-				.orElseThrow(() -> new RuntimeException("Video no encontrado"));
+				.orElseThrow(() -> new RuntimeException(Constantes.VIDEO_NOT_FOUND));
 		// Si el usuario prácticamente terminó el video,
 		// ya no debe aparecer en "Seguir viendo".
 		if (request.getDuration() != null && request.getDuration() > 0 && request.getCurrentSecond() != null) {

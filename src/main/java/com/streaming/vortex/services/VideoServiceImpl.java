@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.streaming.vortex.common.Constantes;
 import com.streaming.vortex.entities.Artist;
 import com.streaming.vortex.entities.LikedVideo;
 import com.streaming.vortex.entities.PreviewImage;
@@ -53,7 +54,7 @@ public class VideoServiceImpl implements VideoService {
 
 	@Override
 	public List<String> getPreviewUrls(Long videoId) {
-		Video video = videoRepository.findById(videoId).orElseThrow(() -> new RuntimeException("Video not found"));
+		Video video = videoRepository.findById(videoId).orElseThrow(() -> new RuntimeException(Constantes.VIDEO_NOT_FOUND));
 
 		return video.getPreviews().stream().sorted(Comparator.comparing(PreviewImage::getPosition))
 				.map(preview -> "/api/vortex/preview?id=" + preview.getId()).collect(Collectors.toList());
@@ -90,7 +91,7 @@ public class VideoServiceImpl implements VideoService {
 			return artistRepository.findRandomArtists().stream().map(videoMapper::artistToFolderDTO)
 					.collect(Collectors.toList());
 		}
-		Artist artist = artistRepository.findByName(path).orElseThrow(() -> new RuntimeException("Artist not found"));
+		Artist artist = artistRepository.findByName(path).orElseThrow(() -> new RuntimeException(Constantes.NOT_FOUND));
 		return artist.getVideos().stream().map(videoMapper::videoToFileDTO).collect(Collectors.toList());
 	}
 
@@ -102,7 +103,7 @@ public class VideoServiceImpl implements VideoService {
 	@Override
 	@Transactional
 	public void like(Long id) {
-		Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException("Video no encontrado"));
+		Video video = videoRepository.findById(id).orElseThrow(() -> new RuntimeException(Constantes.VIDEO_NOT_FOUND));
 		if (!likedRepository.existsByVideoId(id)) {
 			LikedVideo like = new LikedVideo();
 			like.setVideo(video);

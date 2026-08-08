@@ -18,6 +18,4 @@ public interface PreviewImageRepository extends JpaRepository<PreviewImage, Long
 
 	long countByVideoId(Long id);
 
-
-
 }

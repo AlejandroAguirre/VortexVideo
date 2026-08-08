@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.streaming.vortex.common.Constantes;
 import com.streaming.vortex.entities.Artist;
 import com.streaming.vortex.entities.Video;
 import com.streaming.vortex.repository.ArtistRepository;
@@ -33,7 +34,7 @@ public class ScanServiceImpl implements ScanService {
 	public void scanLibrary() throws Exception {
 		File root = new File(this.root);
 		if (!root.exists()) {
-			throw new RuntimeException("No existe la carpeta");
+			throw new RuntimeException(Constantes.DIRECTORY_DO_NOT_EXIST);
 		}
 		File[] artists = root.listFiles(File::isDirectory);
 		if (artists == null)
@@ -53,7 +54,7 @@ public class ScanServiceImpl implements ScanService {
 	}
 
 	private void scanVideos(File folder, Artist artist) throws Exception {
-		File[] videos = folder.listFiles(f -> f.getName().toLowerCase().endsWith(".mp4"));
+		File[] videos = folder.listFiles(f -> f.getName().toLowerCase().endsWith(Constantes.MP4));
 		if (videos == null)
 			return;
 		for (File file : videos) {

@@ -16,12 +16,16 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.streaming.vortex.common.Constantes;
 import com.streaming.vortex.entities.PreviewImage;
 import com.streaming.vortex.entities.Video;
 import com.streaming.vortex.repository.PreviewImageRepository;
 import com.streaming.vortex.repository.VideoRepository;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class ThumbnailServiceImpl implements ThumbnailService {
 
 	private final VideoRepository videoRepository;
@@ -43,7 +47,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 			try {
 				generateImages(video);
 			} catch (Exception e) {
-				e.printStackTrace();
+				 log.error("Error generating thumbnails for video {}", video.getId(), e);
 			}
 		}
 	}
@@ -53,14 +57,14 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		File root = new File(this.thumbRoot);
 		if (!root.exists()) {
 			boolean created = root.mkdirs();
-			System.out.println("Creando carpeta thumbnails: " + created);
+			log.info("Creating thumbnail directory: {}", created);
 		}
-		File thumb = new File(root, video.getId() + "_thumb.jpg");
+		File thumb = new File(root, video.getId() + Constantes.THUMBNAIL_SUFFIX);
 		if (!thumb.exists()) {
 			executeFFmpegThumbnail(video.getFilePath(), thumb);
 		}
 		if (!thumb.exists() || thumb.length() < 1000) {
-			throw new RuntimeException("No se pudo generar thumbnail: " + video.getName());
+			throw new RuntimeException(Constantes.THUMBNAIL_NOT_GENERATED + video.getName());
 		}
 		video.setThumbnailPath(thumb.getAbsolutePath());
 		videoRepository.save(video);
@@ -77,7 +81,8 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 
 	@Override
 	public Resource getPreview(Long id) {
-		PreviewImage img = previewRepository.findById(id).orElseThrow(() -> new RuntimeException("Preview not found"));
+		PreviewImage img = previewRepository.findById(id)
+				.orElseThrow(() -> new RuntimeException(Constantes.PREVIEW_NOT_FOUND));
 
 		return new FileSystemResource(img.getImagePath());
 	}
@@ -89,11 +94,11 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		try (BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
 			String line;
 			while ((line = reader.readLine()) != null) {
-				System.out.println("FFMPEG: " + line);
+				 log.debug("FFmpeg: {}", line);
 			}
 		}
 		int exit = p.waitFor();
-		System.out.println("FFMPEG EXIT: " + exit);
+		log.info("FFmpeg finished with exit code {}", exit);
 	}
 
 	private void generatePreviewFrames(Video video) throws Exception {
@@ -101,7 +106,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		if (count >= 5) {
 			return;
 		}
-		File folder = new File(this.thumbRoot, "previews" + File.separator + video.getId());
+		File folder = new File(this.thumbRoot, Constantes.PREVIEWS_DIRECTORY + File.separator + video.getId());
 		folder.mkdirs();
 		double duration = getVideoDuration(video.getFilePath());
 		double start = 15;
@@ -112,7 +117,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		}
 		int totalFrames = 5;
 		for (int i = 1; i <= totalFrames; i++) {
-			File frame = new File(folder, i + ".jpg");
+			File frame = new File(folder, i + Constantes.JPG_EXTENSION);
 			double second = start + ((end - start) * i / (totalFrames + 1));
 			if (!frame.exists()) {
 				executeFFmpegFrame(video.getFilePath(), frame, second);
@@ -135,7 +140,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		}
 		int exit = p.waitFor();
 		if (exit != 0 || duration == null) {
-			throw new RuntimeException("No se pudo obtener duración del video");
+			throw new RuntimeException(Constantes.COULD_NOT_RETRIEVE_VIDEO_DURATION);
 		}
 		return Double.parseDouble(duration);
 	}
@@ -152,31 +157,31 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 		}
 		int exit = p.waitFor();
 		if (exit != 0) {
-			throw new RuntimeException("FFmpeg frame falló código " + exit);
+			throw new RuntimeException(Constantes.FFMPEG_FRAME_FAILURE_CODE + exit);
 		}
 	}
 
 	@Override
 	public String generateContinueFrame(Video video, Long currentSecond) {
 		try {
-			File folder = new File(thumbRoot, "continue");
+			File folder = new File(thumbRoot, Constantes.CONTINUE);
 			if (!folder.exists()) {
 				folder.mkdirs();
 			}
-			File output = new File(folder, video.getId() + ".jpg");
+			File output = new File(folder, video.getId() + Constantes.JPG_EXTENSION);
 			executeFFmpegFrame(video.getFilePath(), output, currentSecond.doubleValue());
 			return output.getAbsolutePath();
 		} catch (Exception e) {
-			throw new RuntimeException("No se pudo generar imagen continuar viendo", e);
+			throw new RuntimeException(Constantes.COULD_NOT_GENERATE_IMAGE, e);
 		}
 	}
 
 	@Override
 	public Resource getContinuePreview(Long id) {
-		Path path = Paths.get(thumbRoot, "continue", id + ".jpg");
+		Path path = Paths.get(thumbRoot, Constantes.CONTINUE, id + Constantes.JPG_EXTENSION);
 		File file = path.toFile();
 		if (!file.exists()) {
-			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Imagen de continuar viendo no encontrada");
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, Constantes.CONTINUE_WATCHING_IMAGE_NOT_FOUND);
 		}
 		return new FileSystemResource(file);
 	}

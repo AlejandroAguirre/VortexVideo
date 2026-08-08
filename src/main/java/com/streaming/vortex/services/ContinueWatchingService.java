@@ -10,7 +10,6 @@ public interface ContinueWatchingService {
 
 	void saveProgress(ContinueWatchingRequest request);
 
-
 	void remove(Long videoId);
 
 	Page<VideoDTO> getContinueWatching(Pageable pageable);
