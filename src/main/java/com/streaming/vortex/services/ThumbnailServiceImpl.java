@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import com.streaming.vortex.common.Constantes;
 import com.streaming.vortex.entities.PreviewImage;
 import com.streaming.vortex.entities.Video;
+import com.streaming.vortex.event.ThumbnailsGenerationFinishedEvent;
 import com.streaming.vortex.repository.PreviewImageRepository;
 import com.streaming.vortex.repository.VideoRepository;
 
@@ -31,12 +33,14 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 	private final VideoRepository videoRepository;
 	private final PreviewImageRepository previewRepository;
 	private final String thumbRoot;
+	private final ApplicationEventPublisher applicationEventPublisher;
 
 	public ThumbnailServiceImpl(VideoRepository videoRepository, PreviewImageRepository previewRepository,
-			@Value("${media.thumbnail.root}") String thumbRoot) {
+			@Value("${media.thumbnail.root}") String thumbRoot,ApplicationEventPublisher applicationEventPublisher) {
 		this.videoRepository = videoRepository;
 		this.previewRepository = previewRepository;
 		this.thumbRoot = thumbRoot;
+		this.applicationEventPublisher=applicationEventPublisher;
 	}
 
 	@Override
@@ -50,6 +54,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 				 log.error("Error generating thumbnails for video {}", video.getId(), e);
 			}
 		}
+		applicationEventPublisher.publishEvent(new ThumbnailsGenerationFinishedEvent(videos.size()));
 	}
 
 	@Override
