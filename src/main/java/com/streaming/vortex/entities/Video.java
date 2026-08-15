@@ -16,6 +16,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
 
 @Entity
 @Table(name = "videos")
@@ -36,8 +38,10 @@ public class Video {
 
 	private Long duration;
 
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date lastModified;
 
+	@Temporal(TemporalType.TIMESTAMP)
 	private Date lastScan;
 
 	@Column(length = 1000)

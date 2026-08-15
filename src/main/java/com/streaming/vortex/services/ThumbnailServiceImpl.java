@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -72,6 +73,7 @@ public class ThumbnailServiceImpl implements ThumbnailService {
 			throw new RuntimeException(Constantes.THUMBNAIL_NOT_GENERATED + video.getName());
 		}
 		video.setThumbnailPath(thumb.getAbsolutePath());
+		video.setLastModified(new Date());
 		videoRepository.save(video);
 		generatePreviewFrames(video);
 	}
